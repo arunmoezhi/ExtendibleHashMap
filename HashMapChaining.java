@@ -11,12 +11,12 @@ class Pair
   }
 }
 
-class HashMapImplementation
+class HashMapChaining
 {
   int m_size;
   List<Pair>[] bucket;
   
-  HashMapImplementation(int size)
+  HashMapChaining(int size)
   {
     m_size = size;
     bucket = (List<Pair>[]) new ArrayList[m_size]; 
@@ -87,7 +87,7 @@ class HashMapImplementation
   public static void main(String[] args)
   {
     int size = Integer.parseInt(args[0]);
-    HashMapImplementation map = new HashMapImplementation(size);
+    HashMapChaining map = new HashMapChaining(size);
     HashMap<Integer, Integer> hmap = new HashMap<>();
     int maxValue = 1000000;
     int numOfTrials = 1000000;
