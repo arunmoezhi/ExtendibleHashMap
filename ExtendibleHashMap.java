@@ -34,6 +34,10 @@ class ExtendibleHashMap
     this.globalDepth = globalDepth;
     this.bucketSize = bucketSize;
     directory = new Bucket[1 << globalDepth];
+    for(int i=0;i<directory.length;i++)
+    {
+      directory[i] = new Bucket(globalDepth, bucketSize);
+    }
   }
   
   void doubleDirectorySize()
@@ -73,14 +77,7 @@ class ExtendibleHashMap
   {
     // find the bucket using binary representation of hashed value and masking it to get K least significant bits
     int bucketId = getBucketId(key); 
-    if(directory[bucketId] == null)
-    {
-      // bucket is empty. Create a new bucket and put the (K, V) pair in it
-      directory[bucketId] = new Bucket(globalDepth, bucketSize);
-      directory[bucketId].data[0] = new Pair(key, val);
-      return;
-    }
-    // bucket not empty. Search for the first available empty slot and also look for a duplicate key.
+    assert(directory[bucketId] != null);
     int index = 0;
     while(index < bucketSize && directory[bucketId].data[index] != null && directory[bucketId].data[index].key != key)
     {
@@ -90,38 +87,25 @@ class ExtendibleHashMap
     {
       // bucket is full
       int localDepth = directory[bucketId].localDepth;
-      if(localDepth < globalDepth)
-      {
-        // no need to double directory size.
-        createNewBucket(bucketId); 
-        if((bucketId & (1 << localDepth)) != 0)
-        {
-          // make sure we call rehash on the old bucket (bucket with leading bit as 0)
-          bucketId = bucketId & ((1 << localDepth)-1); // 110 AND 011 => 010
-        }
-        rehashBuckets(bucketId);
-        // try inserting the new (K, V) pair now. Hopefully, it fits in an empty slot
-        add(key, val);
-      }
-      else
+      if(localDepth == globalDepth)
       {
         doubleDirectorySize();
-        createNewBucket(bucketId); 
-        rehashBuckets(bucketId);
-        // try inserting the new (K, V) pair now. Hopefully, it fits in an empty slot
-        add(key, val);
-        return;
       }
+      createNewBucket(bucketId); 
+      rehashBuckets(bucketId);
+      // try inserting the new (K, V) pair now. Hopefully, it fits in an empty slot
+      add(key, val);
+      return;
     }
     else if(directory[bucketId].data[index] == null)
     {
       // found an empty slot. But the bucket might still contain the key
       for(int i=index+1;i<bucketSize;i++)
       {
-        if(directory[bucketId].data[index] != null && directory[bucketId].data[index].key == key)
+        if(directory[bucketId].data[i] != null && directory[bucketId].data[i].key == key)
         {
           // found a duplicate key. Overwrite it.
-          directory[bucketId].data[index].val = val;
+          directory[bucketId].data[i].val = val;
           return;
         }
       }
@@ -140,7 +124,7 @@ class ExtendibleHashMap
   {
     return false;
   }
-
+  
   void createNewBucket(int bucketId)
   {
     // create a new bucket in the mirror position of bucketId
@@ -157,23 +141,32 @@ class ExtendibleHashMap
       oldBucketId = bucketId & ((1 << localDepth)-1); // 110 AND 011 => 010
       newBucketId = bucketId;
     }
-    directory[newBucketId] = new Bucket(localDepth+1, bucketSize);
-    directory[oldBucketId].localDepth++;
+    int newDepth = localDepth+1;
+    directory[newBucketId] = new Bucket(newDepth, bucketSize);
+    directory[oldBucketId].localDepth = newDepth;
     return;
   }
- 
+
   void rehashBuckets(int bucketId)
   {
-    // note: This method expects the bucketId to be old bucketId
     // rehash this bucket entries
+    int localDepth = directory[bucketId].localDepth;
+    if((bucketId & (1 << localDepth)) != 0)
+    {
+      bucketId = bucketId & ((1 << localDepth)-1); // 110 AND 011 => 010
+    }
     int newBucketIndex=0;
     for(int i=0;i<bucketSize;i++)
     {
       Pair p = directory[bucketId].data[i];
+      if(p == null)
+      {
+        return;
+      }
       int newBucketId = getBucketId(p.key); 
       if(newBucketId == bucketId)
       {
-        // no need to move
+        // cannot move to new bucket 
         continue;
       }
       else
@@ -206,15 +199,16 @@ class ExtendibleHashMap
     for(int i=0;i<directory.length;i++)
     {
       System.out.print(directory[i]);
-      if(directory[i] != null)
+      System.out.print(" (" + directory[i].localDepth + ")");
+      for(int j=0;j<bucketSize;j++)
       {
-        System.out.print(" (" + directory[i].localDepth + ")");
-        for(int j=0;j<bucketSize;j++)
+        if(directory[i].data[j] != null)
         {
-          if(directory[i].data[j] != null)
-          {
-            System.out.print("\t" + directory[i].data[j].key);
-          }
+          System.out.print("\t" + directory[i].data[j].key);
+        }
+        else
+        {
+          System.out.print("\t" + "null"); 
         }
       }
       System.out.println();
@@ -232,6 +226,7 @@ class ExtendibleHashMap
     int initialDirectorySize = Integer.parseInt(args[0]);
     int bucketSize = Integer.parseInt(args[1]);
     ExtendibleHashMap map = new ExtendibleHashMap(initialDirectorySize, bucketSize);
+    /*
     {
       map.add(2,20);
       map.add(4,40);
@@ -248,11 +243,11 @@ class ExtendibleHashMap
       map.add(18,180);
     }
     map.printDirectory();
+    */
     
-    /*
     HashMap<Integer, Integer> hmap = new HashMap<>();
-    int maxValue = 1000000;
-    int numOfTrials = 10;
+    int maxValue = 100;
+    int numOfTrials = Integer.parseInt(args[2]);
     Random rand = new Random();
     rand.setSeed(0);
     for(int i=0;i<numOfTrials;i++)
@@ -284,8 +279,7 @@ class ExtendibleHashMap
     }
     else
     {
-      System.out.println("Fail");
+      System.out.println("Fail: " + "expected: " + checkSum2 + " actual:" + checkSum1);
     }
-    */
   }
 }
