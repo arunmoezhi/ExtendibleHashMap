@@ -142,7 +142,17 @@ class ExtendibleHashMap
 
   boolean remove(int key)
   {
+    int bucketId = getBucketId(key); 
+    for(int i=0;i<bucketSize;i++)
+    {
+      if (directory[bucketId].data[i] != null && directory[bucketId].data[i].key == key)
+      {
+        directory[bucketId].data[i] = null;
+        return true;
+      }
+    }
     return false;
+    // note: underflow not implemented
   }
 
   int getBucketId(int key)
@@ -252,6 +262,10 @@ class ExtendibleHashMap
       int val = rand.nextInt(maxValue);
       map.add(key, val);
       hmap.put(key, val);
+      int delKey = rand.nextInt(maxValue);
+      map.remove(delKey);
+      hmap.remove(delKey);
+
     }
     int checkSum1 = 0;
     int checkSum2 = 0;
