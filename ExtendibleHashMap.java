@@ -58,7 +58,7 @@ class ExtendibleHashMap
 
   int find(int key)
   {
-    int bucketId = getBucketId(key); 
+    int bucketId = getBucketId(key);
     for(int i=0;i<bucketSize;i++)
     {
       if (directory[bucketId].data[i] != null && directory[bucketId].data[i].key == key)
@@ -72,7 +72,7 @@ class ExtendibleHashMap
   void add(int key, int val)
   {
     // find the bucket using binary representation of hashed value and masking it to get K least significant bits
-    int bucketId = getBucketId(key); 
+    int bucketId = getBucketId(key);
     int index = 0;
     while(index < bucketSize && directory[bucketId].data[index] != null && directory[bucketId].data[index].key != key)
     {
@@ -90,7 +90,7 @@ class ExtendibleHashMap
       Bucket currentBucket = directory[bucketId];
       currentBucket.localDepth++;
       Bucket overflowBucket = new Bucket(currentBucket.localDepth, bucketSize);
-      
+
       // rehash keys in the current bucket so they could possibly go into the overflow bucket
       int overflowBucketDataIndex=0;
       for(int i=0;i<bucketSize;i++)
@@ -98,7 +98,7 @@ class ExtendibleHashMap
         int newBucketId = getBucketId(currentBucket.data[i].key);
         if ((newBucketId | (1 << localDepth)) == newBucketId)
         {
-          overflowBucket.data[overflowBucketDataIndex++] = currentBucket.data[i]; 
+          overflowBucket.data[overflowBucketDataIndex++] = currentBucket.data[i];
           currentBucket.data[i] = null;
         }
       }
@@ -142,7 +142,7 @@ class ExtendibleHashMap
 
   boolean remove(int key)
   {
-    int bucketId = getBucketId(key); 
+    int bucketId = getBucketId(key);
     for(int i=0;i<bucketSize;i++)
     {
       if (directory[bucketId].data[i] != null && directory[bucketId].data[i].key == key)
@@ -184,7 +184,7 @@ class ExtendibleHashMap
         }
         else
         {
-          System.out.print("\t" + "null"); 
+          System.out.print("\t" + "null");
         }
       }
       System.out.println();
@@ -194,7 +194,7 @@ class ExtendibleHashMap
 
   int hash(int key)
   {
-    return (int) (31.0*key/17.0); 
+    return (int) (31.0*key/17.0);
   }
 
   static void test()

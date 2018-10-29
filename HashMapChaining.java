@@ -15,13 +15,13 @@ class HashMapChaining
 {
   int m_size;
   List<Pair>[] bucket;
-  
+
   HashMapChaining(int size)
   {
     m_size = size;
-    bucket = (List<Pair>[]) new ArrayList[m_size]; 
+    bucket = (List<Pair>[]) new ArrayList[m_size];
   }
-  
+
   int find(int key)
   {
     int bucketId = hash(key);
@@ -68,11 +68,11 @@ class HashMapChaining
     {
       return false;
     }
-    for(Pair p : bucket[bucketId])
+    for(int i=0;i<bucket[bucketId].size();i++)
     {
-      if(p.key == key)
+      if(bucket[bucketId].get(i).key == key)
       {
-        bucket[bucketId].remove(key);
+        bucket[bucketId].remove(i);;
         return true;
       }
     }
@@ -89,8 +89,8 @@ class HashMapChaining
     int size = Integer.parseInt(args[0]);
     HashMapChaining map = new HashMapChaining(size);
     HashMap<Integer, Integer> hmap = new HashMap<>();
-    int maxValue = 1000000;
-    int numOfTrials = 1000000;
+    int maxValue = 100000;
+    int numOfTrials = Integer.parseInt(args[1]);
     Random rand = new Random();
     rand.setSeed(0);
     for(int i=0;i<numOfTrials;i++)
@@ -99,6 +99,9 @@ class HashMapChaining
       int val = rand.nextInt(maxValue);
       map.add(key, val);
       hmap.put(key, val);
+      int delKey = rand.nextInt(maxValue);
+      map.remove(delKey);
+      hmap.remove(delKey);
     }
     int checkSum1 = 0;
     int checkSum2 = 0;
@@ -122,7 +125,7 @@ class HashMapChaining
     }
     else
     {
-      System.out.println("Fail");
+      System.out.println("Fail: " + "expected: " + checkSum2 + " actual:" + checkSum1);
     }
   }
 }
